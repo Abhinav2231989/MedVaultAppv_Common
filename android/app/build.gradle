@@ -43,21 +43,6 @@ android {
         variant.outputs.configureEach {
             outputFileName = "MedVault.apk"
         }
-
-        // Capacitor CLI expects app-debug.apk for running the debug build.
-        // We create a copy of MedVault.apk as app-debug.apk during the debug assemble task.
-        if (variant.name == "debug") {
-            variant.assembleProvider.configure { assembleTask ->
-                assembleTask.doLast {
-                    copy {
-                        from "${buildDir}/outputs/apk/debug"
-                        into "${buildDir}/outputs/apk/debug"
-                        include "MedVault.apk"
-                        rename "MedVault.apk", "app-debug.apk"
-                    }
-                }
-            }
-        }
     }
 }
 
