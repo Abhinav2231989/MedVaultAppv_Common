@@ -1,0 +1,36 @@
+name: iOS Build Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-ios:
+    # Use a macOS runner which has Xcode pre-installed
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Sync Capacitor iOS Project
+        run: |
+          npx cap sync ios
+
+      - name: Compile Xcode Project (Dry Run)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+                     -scheme App \
+                     -sdk iphonesimulator \
+                     -destination 'generic/platform=iOS Simulator' \
+                     clean build CODE_SIGNING_ALLOWED=NO
