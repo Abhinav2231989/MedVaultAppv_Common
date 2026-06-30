@@ -1,0 +1,30 @@
+stages:
+  - mirror
+
+mirror_to_github:
+  stage: mirror
+  image: alpine:latest
+
+  before_script:
+    - apk add --no-cache git openssh
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+  script:
+    - git config --global user.email "Abhinav2231989@gmail.com"
+    - git config --global user.name "GitLab Mirror Medvault"
+
+    # checkout correct branch
+    - git checkout main
+
+    # add github remote
+    - git remote remove github || true
+    - git remote add github git@github.com:Abhinav2231989/MedicalVault.git
+
+    # push latest main branch
+    - git push github main --force
+
+  only:
+    - main

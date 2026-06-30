@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="920" viewBox="0 0 1500 920">
+  <defs>
+    <linearGradient id="pageBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061a27"/>
+      <stop offset="0.52" stop-color="#0c2b3e"/>
+      <stop offset="1" stop-color="#06131f"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#173c55"/>
+      <stop offset="1" stop-color="#0e2b40"/>
+    </linearGradient>
+    <linearGradient id="voice" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9e6bff"/>
+      <stop offset="1" stop-color="#43bcff"/>
+    </linearGradient>
+    <linearGradient id="file" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5a27ff"/>
+      <stop offset="1" stop-color="#b23bff"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12d6ce"/>
+      <stop offset="1" stop-color="#42b7ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .title { font: 700 34px Arial, sans-serif; fill: #dffbff; }
+      .sub { font: 400 16px Arial, sans-serif; fill: #8db3c5; }
+      .phone-title { font: 700 19px Arial, sans-serif; fill: #08d6d0; letter-spacing: 0.5px; }
+      .label { font: 700 9px Arial, sans-serif; fill: #8fb6ca; letter-spacing: 1.4px; }
+      .input-text { font: 400 11px Consolas, monospace; fill: #789aad; }
+      .button-text { font: 800 10px Arial, sans-serif; fill: white; letter-spacing: 0.7px; }
+      .small { font: 400 10px Arial, sans-serif; fill: #8eb7c8; }
+      .card-title { font: 800 13px Arial, sans-serif; fill: #e8fdff; letter-spacing: 0.8px; }
+      .card-sub { font: 400 10px Arial, sans-serif; fill: #9fc2d0; }
+      .badge { font: 800 12px Arial, sans-serif; fill: #04141f; }
+      .option-title { font: 800 18px Arial, sans-serif; fill: #e7fbff; }
+      .option-desc { font: 400 13px Arial, sans-serif; fill: #9eb9c7; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="920" fill="#f3f6fa"/>
+  <text x="70" y="70" class="title" fill="#123">AI assist block concepts for Add Patient Record</text>
+  <text x="70" y="101" class="sub" fill="#53616d">Three layout directions. These are only visual suggestions, not app changes.</text>
+
+  <g transform="translate(80 150)">
+    <text x="0" y="-32" class="option-title" fill="#123">Option A - Compact boxed AI Upload</text>
+    <text x="0" y="-10" class="option-desc" fill="#52636f">Closest to your current layout. Adds a clean section heading and groups both actions.</text>
+    <g filter="url(#shadow)">
+      <rect x="0" y="0" width="360" height="700" rx="42" fill="#050b10"/>
+      <rect x="13" y="13" width="334" height="674" rx="34" fill="url(#pageBg)"/>
+      <circle cx="42" cy="34" r="8" fill="#07111a" stroke="#1d3f55"/>
+      <text x="52" y="82" class="phone-title">Add Patient</text>
+      <text x="52" y="106" class="phone-title">Record</text>
+      <circle cx="306" cy="88" r="14" fill="#244a60"/>
+      <text x="302" y="93" font-family="Arial" font-size="14" fill="#c8e4ee">x</text>
+
+      <rect x="50" y="135" width="260" height="118" rx="14" fill="url(#panel)" stroke="#2b5e78"/>
+      <text x="66" y="163" class="card-title">AI Upload</text>
+      <text x="66" y="181" class="card-sub">Use voice or a report to fill the form</text>
+      <rect x="66" y="198" width="106" height="38" rx="14" fill="url(#voice)"/>
+      <text x="82" y="222" class="button-text">MIC  VOICE</text>
+      <rect x="186" y="198" width="106" height="38" rx="14" fill="url(#file)"/>
+      <text x="204" y="222" class="button-text">FILE  UPLOAD</text>
+
+      <g transform="translate(50 286)">
+        <text x="0" y="0" class="label">PATIENT NAME *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">e.g., John Doe</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+        <text x="230" y="38" font-size="14" fill="#06242c">m</text>
+      </g>
+      <g transform="translate(50 365)">
+        <text x="0" y="0" class="label">PHONE NUMBER *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">e.g., 9876543210</text>
+      </g>
+      <g transform="translate(50 444)">
+        <text x="0" y="0" class="label">DATE OF VISIT *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+      </g>
+      <g transform="translate(50 523)">
+        <text x="0" y="0" class="label">DIAGNOSIS *</text>
+        <rect x="0" y="13" width="260" height="72" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">Speak or type diagnosis</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+      </g>
+    </g>
+  </g>
+
+  <g transform="translate(570 150)">
+    <text x="0" y="-32" class="option-title" fill="#123">Option B - Smart Intake card</text>
+    <text x="0" y="-10" class="option-desc" fill="#52636f">More premium. Explains what the AI feature does without adding clutter.</text>
+    <g filter="url(#shadow)">
+      <rect x="0" y="0" width="360" height="700" rx="42" fill="#050b10"/>
+      <rect x="13" y="13" width="334" height="674" rx="34" fill="url(#pageBg)"/>
+      <circle cx="42" cy="34" r="8" fill="#07111a" stroke="#1d3f55"/>
+      <text x="52" y="82" class="phone-title">Add Patient</text>
+      <text x="52" y="106" class="phone-title">Record</text>
+      <circle cx="306" cy="88" r="14" fill="#244a60"/>
+      <text x="302" y="93" font-family="Arial" font-size="14" fill="#c8e4ee">x</text>
+
+      <rect x="50" y="135" width="260" height="150" rx="18" fill="#132f46" stroke="#315f78"/>
+      <rect x="66" y="154" width="40" height="40" rx="12" fill="url(#accent)"/>
+      <text x="78" y="181" class="badge">AI</text>
+      <text x="118" y="166" class="card-title">Smart Intake</text>
+      <text x="118" y="184" class="card-sub">Fill details from voice or document</text>
+      <rect x="66" y="211" width="226" height="1" fill="#2b5b71"/>
+      <rect x="66" y="228" width="102" height="40" rx="12" fill="url(#voice)"/>
+      <text x="82" y="253" class="button-text">VOICE</text>
+      <rect x="180" y="228" width="112" height="40" rx="12" fill="#14364d" stroke="#7b39ff"/>
+      <text x="198" y="253" class="button-text">UPLOAD FILE</text>
+
+      <g transform="translate(50 319)">
+        <text x="0" y="0" class="label">PATIENT NAME *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">e.g., John Doe</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+      </g>
+      <g transform="translate(50 398)">
+        <text x="0" y="0" class="label">PHONE NUMBER *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+      </g>
+      <g transform="translate(50 477)">
+        <text x="0" y="0" class="label">DATE OF VISIT *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+      </g>
+      <g transform="translate(50 556)">
+        <text x="0" y="0" class="label">DIAGNOSIS *</text>
+        <rect x="0" y="13" width="260" height="72" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">Speak or type diagnosis</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+      </g>
+    </g>
+  </g>
+
+  <g transform="translate(1060 150)">
+    <text x="0" y="-32" class="option-title" fill="#123">Option C - Minimal AI Intake strip</text>
+    <text x="0" y="-10" class="option-desc" fill="#52636f">Most compact. Good if you want less vertical height on small phones.</text>
+    <g filter="url(#shadow)">
+      <rect x="0" y="0" width="360" height="700" rx="42" fill="#050b10"/>
+      <rect x="13" y="13" width="334" height="674" rx="34" fill="url(#pageBg)"/>
+      <circle cx="42" cy="34" r="8" fill="#07111a" stroke="#1d3f55"/>
+      <text x="52" y="82" class="phone-title">Add Patient</text>
+      <text x="52" y="106" class="phone-title">Record</text>
+      <circle cx="306" cy="88" r="14" fill="#244a60"/>
+      <text x="302" y="93" font-family="Arial" font-size="14" fill="#c8e4ee">x</text>
+
+      <rect x="50" y="135" width="260" height="90" rx="14" fill="#132f46" stroke="#315f78"/>
+      <text x="66" y="163" class="card-title">AI Intake</text>
+      <rect x="66" y="178" width="105" height="32" rx="16" fill="url(#voice)"/>
+      <text x="87" y="199" class="button-text">VOICE</text>
+      <rect x="184" y="178" width="108" height="32" rx="16" fill="url(#file)"/>
+      <text x="209" y="199" class="button-text">FILE</text>
+
+      <g transform="translate(50 258)">
+        <text x="0" y="0" class="label">PATIENT NAME *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">e.g., John Doe</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+      </g>
+      <g transform="translate(50 337)">
+        <text x="0" y="0" class="label">PHONE NUMBER *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+      </g>
+      <g transform="translate(50 416)">
+        <text x="0" y="0" class="label">DATE OF VISIT *</text>
+        <rect x="0" y="13" width="260" height="40" rx="5" fill="#0f3149" stroke="#23536d"/>
+      </g>
+      <g transform="translate(50 495)">
+        <text x="0" y="0" class="label">DIAGNOSIS *</text>
+        <rect x="0" y="13" width="260" height="72" rx="5" fill="#0f3149" stroke="#23536d"/>
+        <text x="14" y="38" class="input-text">Speak or type diagnosis</text>
+        <circle cx="236" cy="33" r="14" fill="#05b9c0"/>
+      </g>
+    </g>
+  </g>
+</svg>

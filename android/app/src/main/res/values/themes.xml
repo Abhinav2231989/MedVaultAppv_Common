@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.MedVault" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">#00a8a8</item>
+        <item name="colorPrimaryDark">#007f7f</item>
+        <item name="colorAccent">#ff6b6b</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">#0a1929</item>
+        <!-- Background color. -->
+        <item name="android:windowBackground">#0a1929</item>
+    </style>
+</resources>
