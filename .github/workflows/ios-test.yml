@@ -27,10 +27,22 @@ jobs:
         run: |
           npx cap sync ios
 
-      - name: Compile Xcode Project (Dry Run)
+      - name: Compile Xcode Project (Unsigned for Device)
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
-                     -sdk iphonesimulator \
-                     -destination 'generic/platform=iOS Simulator' \
-                     clean build CODE_SIGNING_ALLOWED=NO
+                     -sdk iphoneos \
+                     -derivedDataPath build \
+                     clean build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Package as .ipa
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Debug-iphoneos/App.app Payload/
+          zip -r MedVault.ipa Payload
+
+      - name: Upload .ipa Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MedVault-iOS-Unsigned-ipa
+          path: MedVault.ipa
