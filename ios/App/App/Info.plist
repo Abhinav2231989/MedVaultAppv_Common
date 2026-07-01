@@ -54,9 +54,11 @@
 			<string>Google OAuth Redirect</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>YOUR_REVERSED_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.258736335690-alq9iveacl5o633kbuui6roddre2j0p9</string>
 			</array>
 		</dict>
 	</array>
+	<key>GoogleClientID</key>
+	<string>258736335690-alq9iveacl5o633kbuui6roddre2j0p9.apps.googleusercontent.com</string>
 </dict>
 </plist>
