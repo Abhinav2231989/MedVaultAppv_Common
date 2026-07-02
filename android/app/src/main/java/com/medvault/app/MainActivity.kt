@@ -969,14 +969,24 @@ class MainActivity : AppCompatActivity() {
                 .setFields("id")
                 .execute()
         }
+
+        checkAndCreateBackup(service, folderId, dataJson)
     }
 
     private suspend fun downloadFromGoogleDrive(): DriveDataSnapshot = withContext(Dispatchers.IO) {
         val service = driveService ?: return@withContext DriveDataSnapshot(null, null)
 
         val folderId = getOrCreateFolder(service)
-        val file = findFileMetadata(service, folderId, DATA_FILE)
-            ?: return@withContext DriveDataSnapshot(null, null)
+        var file = findFileMetadata(service, folderId, DATA_FILE)
+        
+        if (file == null) {
+            val restored = restoreFromBackup(service, folderId)
+            if (restored != null) {
+                file = restored
+            } else {
+                return@withContext DriveDataSnapshot(null, null)
+            }
+        }
 
         val outputStream = ByteArrayOutputStream()
         service.files().get(file.id).executeMediaAndDownloadTo(outputStream)
@@ -985,6 +995,93 @@ class MainActivity : AppCompatActivity() {
         val decompressedJson = decompressGzip(outputStream.toByteArray())
         
         DriveDataSnapshot(decompressedJson, driveRevisionToken(file))
+    }
+
+    private fun checkAndCreateBackup(service: Drive, mainFolderId: String, dataJson: String) {
+        val prefs = getSharedPreferences("MedVaultStorage", MODE_PRIVATE)
+        val lastBackupTime = prefs.getLong("medvault_last_backup_time", 0L)
+        val now = System.currentTimeMillis()
+        
+        // 48 hours = 172800000 milliseconds
+        if (now - lastBackupTime >= 172800000L) {
+            try {
+                val backupFolderId = getOrCreateFolder(service, "backup", mainFolderId)
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                val timestamp = sdf.format(Date(now))
+                val backupFileName = "patient_records_$timestamp.json"
+                
+                val compressedBytes = compressGzip(dataJson)
+                val content = com.google.api.client.http.ByteArrayContent(
+                    "application/octet-stream",
+                    compressedBytes
+                )
+                
+                val backupMetadata = File().apply {
+                    name = backupFileName
+                    mimeType = "application/octet-stream"
+                    parents = listOf(backupFolderId)
+                }
+                
+                service.files().create(backupMetadata, content)
+                    .setFields("id")
+                    .execute()
+                
+                prefs.edit().putLong("medvault_last_backup_time", now).apply()
+                rotateBackups(service, backupFolderId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun rotateBackups(service: Drive, backupFolderId: String) {
+        try {
+            val result = service.files().list()
+                .setQ("name contains 'patient_records_' and '$backupFolderId' in parents and trashed=false")
+                .setSpaces("drive")
+                .setOrderBy("name desc")
+                .setFields("files(id, name)")
+                .execute()
+                
+            val files = result.files
+            if (files != null && files.size > 5) {
+                for (i in 5 until files.size) {
+                    val fileId = files[i].id
+                    service.files().delete(fileId).execute()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun restoreFromBackup(service: Drive, mainFolderId: String): File? {
+        return try {
+            val backupFolderId = getOrCreateFolder(service, "backup", mainFolderId)
+            val result = service.files().list()
+                .setQ("name contains 'patient_records_' and '$backupFolderId' in parents and trashed=false")
+                .setSpaces("drive")
+                .setOrderBy("name desc")
+                .setFields("files(id, name, modifiedTime, version, headRevisionId)")
+                .execute()
+                
+            val latestBackup = result.files?.firstOrNull() ?: return null
+            val backupFileId = latestBackup.id ?: return null
+            
+            val copyMetadata = File().apply {
+                name = DATA_FILE
+                parents = listOf(mainFolderId)
+            }
+            
+            val copiedFile = service.files().copy(backupFileId, copyMetadata)
+                .setFields("id, modifiedTime, version, headRevisionId")
+                .execute()
+                
+            copiedFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun getOrCreateFolder(

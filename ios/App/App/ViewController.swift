@@ -341,9 +341,10 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
                     request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
                     request.httpBody = compressedData
                     
-                    URLSession.shared.dataTask(with: request) { data, response, error in
+                    URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                         if error == nil {
                             self?.notifySyncComplete(success: true, message: "Data uploaded to Google Drive")
+                            self?.checkAndCreateBackup(token: token, dataJson: dataJson, mainFolderId: folderId)
                         } else {
                             self?.notifySyncComplete(success: false, message: "Upload failed: \(error?.localizedDescription ?? "unknown error")")
                         }
@@ -363,7 +364,7 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
                     ]
                     request.httpBody = try? JSONSerialization.data(withJSONObject: meta)
                     
-                    URLSession.shared.dataTask(with: request) { data, response, error in
+                    URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                         guard let data = data, error == nil,
                               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                               let newFileId = json["id"] as? String else {
@@ -382,6 +383,7 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
                         URLSession.shared.dataTask(with: uploadRequest) { data, response, error in
                             if error == nil {
                                 self?.notifySyncComplete(success: true, message: "Data uploaded to Google Drive")
+                                self?.checkAndCreateBackup(token: token, dataJson: dataJson, mainFolderId: folderId)
                             } else {
                                 self?.notifySyncComplete(success: false, message: "Upload content failed.")
                             }
@@ -412,7 +414,7 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
             
             self?.findFileMetadata(token: token, folderId: folderId, fileName: "patient_records.json") { fileInfo in
                 guard let fileId = fileInfo?["id"] as? String, let revision = fileInfo?["revisionToken"] as? String else {
-                    self?.notifyDataReceived(data: nil, revision: nil)
+                    self?.restoreFromBackupAndDownload(token: token, folderId: folderId)
                     return
                 }
                 
@@ -435,6 +437,191 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
                 }.resume()
             }
         }
+    }
+    
+    private func checkAndCreateBackup(token: String, dataJson: String, mainFolderId: String) {
+        let now = Date()
+        let lastBackupTime = UserDefaults.standard.object(forKey: "medvault_last_backup_time") as? Date
+        
+        // 48 hours = 172800 seconds
+        if lastBackupTime == nil || now.timeIntervalSince(lastBackupTime!) >= 172800 {
+            getOrCreateFolder(token: token, folderName: "backup", parentId: mainFolderId) { [weak self] backupFolderId in
+                guard let backupFolderId = backupFolderId else { return }
+                
+                let dateForm = DateFormatter()
+                dateForm.dateFormat = "yyyyMMdd_HHmmss"
+                let timestamp = dateForm.string(from: now)
+                let backupFileName = "patient_records_\(timestamp).json"
+                
+                self?.uploadBackupFile(token: token, dataJson: dataJson, folderId: backupFolderId, fileName: backupFileName) { success in
+                    if success {
+                        UserDefaults.standard.set(now, forKey: "medvault_last_backup_time")
+                        self?.rotateBackups(token: token, backupFolderId: backupFolderId)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func uploadBackupFile(token: String, dataJson: String, folderId: String, fileName: String, completion: @escaping (Bool) -> Void) {
+        guard let compressedData = dataJson.data(using: .utf8)?.gzipCompressed() else {
+            completion(false)
+            return
+        }
+        
+        let url = URL(string: "https://www.googleapis.com/drive/v3/files")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let meta: [String: Any] = [
+            "name": fileName,
+            "mimeType": "application/octet-stream",
+            "parents": [folderId]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: meta)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let newFileId = json["id"] as? String else {
+                completion(false)
+                return
+            }
+            
+            let uploadUrl = URL(string: "https://www.googleapis.com/upload/drive/v3/files/\(newFileId)?uploadType=media")!
+            var uploadRequest = URLRequest(url: uploadUrl)
+            uploadRequest.httpMethod = "PATCH"
+            uploadRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            uploadRequest.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+            uploadRequest.httpBody = compressedData
+            
+            URLSession.shared.dataTask(with: uploadRequest) { _, _, uploadError in
+                completion(uploadError == nil)
+            }.resume()
+        }.resume()
+    }
+    
+    private func rotateBackups(token: String, backupFolderId: String) {
+        let query = "name contains 'patient_records_' and '\(backupFolderId)' in parents and trashed=false"
+        var urlComponents = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "spaces", value: "drive"),
+            URLQueryItem(name: "orderBy", value: "name desc"),
+            URLQueryItem(name: "fields", value: "files(id, name)")
+        ]
+        
+        var request = URLRequest(url: urlComponents.url!)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let data = data, error == nil,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let files = json["files"] as? [[String: Any]] else {
+                return
+            }
+            
+            if files.count > 5 {
+                for i in 5..<files.count {
+                    if let fileId = files[i]["id"] as? String {
+                        self?.deleteDriveFile(token: token, fileId: fileId)
+                    }
+                }
+            }
+        }.resume()
+    }
+    
+    private func deleteDriveFile(token: String, fileId: String) {
+        let url = URL(string: "https://www.googleapis.com/drive/v3/files/\(fileId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        URLSession.shared.dataTask(with: request).resume()
+    }
+    
+    private func restoreFromBackupAndDownload(token: String, folderId: String) {
+        getOrCreateFolder(token: token, folderName: "backup", parentId: folderId) { [weak self] backupFolderId in
+            guard let backupFolderId = backupFolderId else {
+                self?.notifyDataReceived(data: nil, revision: nil)
+                return
+            }
+            
+            let query = "name contains 'patient_records_' and '\(backupFolderId)' in parents and trashed=false"
+            var urlComponents = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
+            urlComponents.queryItems = [
+                URLQueryItem(name: "q", value: query),
+                URLQueryItem(name: "spaces", value: "drive"),
+                URLQueryItem(name: "orderBy", value: "name desc"),
+                URLQueryItem(name: "fields", value: "files(id, name, modifiedTime, version, headRevisionId)")
+            ]
+            
+            var request = URLRequest(url: urlComponents.url!)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            
+            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+                guard let data = data, error == nil,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let files = json["files"] as? [[String: Any]],
+                      let latestBackup = files.first,
+                      let backupFileId = latestBackup["id"] as? String else {
+                    self?.notifyDataReceived(data: nil, revision: nil)
+                    return
+                }
+                
+                self?.copyDriveFile(token: token, fileId: backupFileId, newName: "patient_records.json", parentFolderId: folderId) { copiedFileInfo in
+                    guard let copiedFileInfo = copiedFileInfo,
+                          let newFileId = copiedFileInfo["id"] as? String else {
+                        self?.notifyDataReceived(data: nil, revision: nil)
+                        return
+                    }
+                    
+                    let revision = self?.driveRevisionToken(file: copiedFileInfo) ?? ""
+                    
+                    let url = URL(string: "https://www.googleapis.com/drive/v3/files/\(newFileId)?alt=media")!
+                    var downloadRequest = URLRequest(url: url)
+                    downloadRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    
+                    URLSession.shared.dataTask(with: downloadRequest) { downloadData, _, downloadError in
+                        guard let downloadData = downloadData, downloadError == nil else {
+                            self?.notifyDataReceived(data: nil, revision: nil)
+                            return
+                        }
+                        
+                        if let decompressedData = downloadData.gzipDecompressed(),
+                           let jsonString = String(data: decompressedData, encoding: .utf8) {
+                            self?.notifyDataReceived(data: jsonString, revision: revision)
+                        } else {
+                            self?.notifyDataReceived(data: nil, revision: nil)
+                        }
+                    }.resume()
+                }
+            }.resume()
+        }
+    }
+    
+    private func copyDriveFile(token: String, fileId: String, newName: String, parentFolderId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let url = URL(string: "https://www.googleapis.com/drive/v3/files/\(fileId)/copy?fields=id,modifiedTime,version,headRevisionId")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let meta: [String: Any] = [
+            "name": newName,
+            "parents": [parentFolderId]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: meta)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(nil)
+                return
+            }
+            completion(json)
+        }.resume()
     }
     
     // MARK: - Report Actions
